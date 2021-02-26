@@ -14,3 +14,20 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.collapse-aside {
+  min-width: 400px;
+  height: 100vh;
+}
+
+.sun-editor {
+  border: 0px !important;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg {
+  padding: 20px 0px;
+}
+
+.sun-editor .se-resizing-bar {
+  display: none !important;
+}
