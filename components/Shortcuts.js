@@ -56,6 +56,9 @@ export default function Shortcuts() {
               <Text>
                 <Kbd>shift</Kbd> + <Kbd>s</Kbd> - Focus Mode
               </Text>
+              <Text>
+                <Kbd>shift</Kbd> + <Kbd>p</Kbd> - Preview Mode
+              </Text>
             </Box>
           </ModalBody>
         </ModalContent>

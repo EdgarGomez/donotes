@@ -3,6 +3,8 @@ import {
   saveNote,
   newNote,
   deleteNote,
+  deleteTag,
+  newTag,
 } from "@/utils/supabase-client";
 import {
   Box,
@@ -21,84 +23,87 @@ import { FilePlus, Menu, Trash, Sidebar, Eye } from "react-feather";
 import Moment from "react-moment";
 import Hotkeys from "react-hot-keys";
 import { useState, useEffect } from "react";
-import SunEditor from "suneditor-react";
-import "suneditor/dist/css/suneditor.min.css"; // Import Sun Editor's CSS File
 import Shortcuts from "@/components/Shortcuts";
+import Drawer from "@/components/Drawer";
+import ReactMarkdown from "react-markdown";
+import gfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import ReactTags from "react-tag-autocomplete";
 
 export default function Notes() {
+  const renderers = {
+    code: ({ language, value }) => {
+      return <SyntaxHighlighter language={language} children={value} />;
+    },
+  };
   const { isOpen, onOpen, onToggle } = useDisclosure();
 
   const [notes, setNotes] = useState([]);
-  const [currentNoteId, setCurrentNoteId] = useState("");
-  const [currentNoteTitle, setCurrentNoteTitle] = useState("");
-  const [currentNoteContent, setCurrentNoteContent] = useState("");
-  const [viewToolbar, setViewToolbar] = useState(false);
+  const [currentNote, setCurrentNote] = useState(false);
+  const [currentTag, setCurrentTag] = useState("");
+  const [preview, setPreview] = useState(false);
+  const [tags, setTags] = useState([]);
 
-  const showToolbar = () => {
-    setViewToolbar(!viewToolbar);
+  const handleFormChange = ({ target: { type, name, value } }) => {
+    setCurrentNote({ ...currentNote, [name]: value });
   };
 
   const selectNote = (note) => {
-    getNotes(
-      setCurrentNoteId,
-      setCurrentNoteTitle,
-      setCurrentNoteContent,
-      setNotes,
-      note.id,
-      note.title,
-      note.content
-    );
+    setCurrentNote({
+      ...currentNote,
+      id: note.id,
+      title: note.title,
+      content: note.content,
+    });
   };
 
   useEffect(() => {
     onOpen();
     const timeoutId = setTimeout(
-      () => saveNote(currentNoteId, currentNoteTitle, currentNoteContent),
+      () => saveNote(currentNote, setNotes, setCurrentNote, currentTag),
 
       1000
     );
     return () => clearTimeout(timeoutId);
-  }, [currentNoteContent, currentNoteTitle]);
+  }, [currentNote.title, currentNote.content]);
 
-  useEffect(() => {
-    getNotes(
-      setCurrentNoteId,
-      setCurrentNoteTitle,
-      setCurrentNoteContent,
-      setNotes,
-      "",
-      "",
-      ""
-    );
+  useEffect(async () => {
+    getNotes(setNotes, setCurrentNote, "");
   }, []);
+
+  const removeTag = (tag) => {
+    const deletetag = tags.slice(0);
+    const deletetaginfo = deletetag.splice(tag, 1);
+    deleteTag(deletetaginfo, setTags);
+  };
+
+  const addTag = (tag) => {
+    let newtag = tags.find((item) => item.name === tag.name);
+    if (!newtag) {
+      newTag(tag, setTags);
+    }
+  };
+
+  const suggestions = [
+    { id: 3, name: "Bananas" },
+    { id: 4, name: "Bangos" },
+    { id: 5, name: "Lemons" },
+    { id: 6, name: "Apricots" },
+  ];
 
   return (
     <>
       <Hotkeys
         keyName="shift+n"
-        onKeyDown={() =>
-          newNote(
-            setCurrentNoteId,
-            setCurrentNoteTitle,
-            setCurrentNoteContent,
-            setNotes
-          )
-        }
+        onKeyDown={() => newNote(setNotes, setCurrentNote)}
       />
       <Hotkeys
         keyName="shift+d"
-        onKeyDown={() =>
-          deleteNote(
-            currentNoteId,
-            setCurrentNoteId,
-            setCurrentNoteTitle,
-            setCurrentNoteContent,
-            setNotes
-          )
-        }
+        onKeyDown={() => deleteNote(currentNote.id, setNotes, setCurrentNote)}
       />
       <Hotkeys keyName="shift+t" onKeyDown={() => showToolbar()} />
       <Hotkeys keyName="shift+s" onKeyDown={() => onToggle()} />
+      <Hotkeys keyName="shift+p" onKeyDown={() => setPreview(!preview)} />
 
       <Box height="100vh" width="100%" display="flex" color="black">
         <Collapse in={isOpen} animateOpacity className="collapse-aside">
@@ -121,16 +126,20 @@ export default function Notes() {
               <HStack w="100%" justify="space-between">
                 <Box>
                   {" "}
-                  <IconButton
-                    colorScheme="blue"
-                    size="md"
-                    icon={<Menu />}
-                    variant="ghost"
-                    onClick={onToggle}
+                  <Drawer
+                    setCurrentTag={setCurrentTag}
+                    setNotes={setNotes}
+                    setCurrentNote={setCurrentNote}
+                    tags={tags}
+                    setTags={setTags}
                   />
                 </Box>
                 <Box>
-                  <Heading fontSize="xl">Notes</Heading>
+                  <Heading fontSize="xl">
+                    {currentTag === ""
+                      ? "Notes"
+                      : `Notes filtered by ${currentTag.name}`}
+                  </Heading>
                 </Box>
                 <Box>
                   {" "}
@@ -139,31 +148,30 @@ export default function Notes() {
                     size="md"
                     icon={<FilePlus />}
                     variant="ghost"
-                    onClick={() =>
-                      newNote(
-                        setCurrentNoteId,
-                        setCurrentNoteTitle,
-                        setCurrentNoteContent,
-                        setNotes
-                      )
-                    }
+                    onClick={() => newNote(setNotes, setCurrentNote)}
                   />
                 </Box>
               </HStack>
             </Box>
 
             <Box px="15px" py="15px">
-              <List>
-                {notes.map((note) => (
+              <List className="notes-list">
+                {notes.map((note, i) => (
                   <ListItem
                     onClick={() => selectNote(note)}
-                    key={note.id}
+                    key={i}
                     borderWidth="1px"
                     borderLeft="0"
                     borderRight="0"
                     borderTop="0"
                     py="5px"
                     cursor="pointer"
+                    bgGradient={
+                      currentNote.id === note.id
+                        ? "linear(to-r, blue.500, blue.100)"
+                        : ""
+                    }
+                    color={currentNote.id === note.id ? "white" : ""}
                   >
                     <Box w="100%">{note.title}</Box>
                   </ListItem>
@@ -184,7 +192,6 @@ export default function Notes() {
           >
             <IconButton
               colorScheme="blue"
-              aria-label="delete"
               size="md"
               icon={<Sidebar />}
               variant="ghost"
@@ -193,57 +200,74 @@ export default function Notes() {
             <Box>
               <IconButton
                 colorScheme="blue"
+                size="md"
+                icon={<Eye />}
+                variant="ghost"
+                onClick={() => setPreview(!preview)}
+              />
+              <Shortcuts />
+              <IconButton
+                colorScheme="blue"
                 aria-label="delete"
                 size="md"
                 icon={<Trash />}
                 variant="ghost"
                 onClick={() =>
-                  deleteNote(
-                    currentNoteId,
-                    setCurrentNoteId,
-                    setCurrentNoteTitle,
-                    setCurrentNoteContent,
-                    setNotes
-                  )
+                  deleteNote(currentNote.id, setNotes, setCurrentNote)
                 }
               />
-              <IconButton
-                colorScheme="blue"
-                size="md"
-                icon={<Eye />}
-                variant="ghost"
-                onClick={() => showToolbar()}
-              />
-              <Shortcuts />
             </Box>
           </HStack>
-          <Box px="40px" overflow="scroll">
+          <Box px="40px" overflow="scroll" position="relative">
             <Input
               variant="unstyled"
               placeholder="New note"
-              value={currentNoteTitle}
-              onChange={(e) => setCurrentNoteTitle(e.target.value)}
+              value={currentNote.title || ""}
+              onChange={handleFormChange}
               w="100%"
               height="5vh"
               fontSize="22px"
+              name="title"
             />
-            <SunEditor
+            {/*<SunEditor
               setContents={currentNoteContent}
               onChange={(content) => setCurrentNoteContent(content)}
               showToolbar={viewToolbar}
               height="90vh"
               resize="none"
               setDefaultStyle="font-size: 16px;"
-            />
-            {/*<Textarea
-              variant="unstyled"
-              placeholder="Content"
-              height="90vh"
-              value={currentNoteContent}
-              onChange={(e) => setCurrentNoteContent(e.target.value)}
-              resize="none"
-              w="100%"
             />*/}
+            {preview ? (
+              <Box h="90vh">
+                <ReactMarkdown
+                  plugins={[gfm]}
+                  renderers={renderers}
+                  allowDangerousHtml
+                  children={currentNote.content || ""}
+                />
+              </Box>
+            ) : (
+              <Textarea
+                variant="unstyled"
+                placeholder="Content"
+                height="90vh"
+                value={currentNote.content || ""}
+                onChange={handleFormChange}
+                resize="none"
+                w="100%"
+                name="content"
+              />
+            )}
+            <Box position="absolute" bottom="5px" w="100%" left="0">
+              <ReactTags
+                //ref={this.reactTags}
+                tags={tags}
+                suggestions={tags}
+                onDelete={removeTag}
+                onAddition={addTag}
+                allowNew
+              />
+            </Box>
           </Box>
         </Box>
       </Box>
