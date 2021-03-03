@@ -5,7 +5,12 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export const getNotes = async (setNotes, setCurrentNote, currentNote) => {
+export const getNotes = async (
+  setNotes,
+  setCurrentNote,
+  currentNote,
+  setCurrentTags
+) => {
   const { data, error } = await supabase
     .from("notes")
     .select()
@@ -20,9 +25,33 @@ export const getNotes = async (setNotes, setCurrentNote, currentNote) => {
   setNotes(data);
   if (currentNote === "") {
     setCurrentNote(data[0]);
+    getCurrentTags(data[0], setCurrentTags);
   } else {
     setCurrentNote(currentNote);
+    getCurrentTags(currentNote, setCurrentTags);
   }
+};
+
+export const getCurrentTags = async (currentNote, setCurrentTags) => {
+  const { data, error } = await supabase
+    .from("notetag")
+    .select(`*, tags( * )`)
+    .filter("note_id", "eq", currentNote.id);
+
+  if (error) {
+    console.log(error.message);
+    throw error;
+  }
+
+  let tags = [];
+  let i = 0;
+
+  data.map((tag) => {
+    tags[i] = tag.tags;
+    i++;
+  });
+
+  setCurrentTags(tags);
 };
 
 export const getFilterNotes = async (
@@ -78,7 +107,8 @@ export const saveNote = async (
   currentNote,
   setNotes,
   setCurrentNote,
-  currentTag
+  currentTag,
+  setCurrentTags
 ) => {
   const { data, error } = await supabase
     .from("notes")
@@ -90,13 +120,18 @@ export const saveNote = async (
     throw error;
   }
   if (currentTag == "") {
-    getNotes(setNotes, setCurrentNote, currentNote);
+    getNotes(setNotes, setCurrentNote, currentNote, setCurrentTags);
   } else {
     getFilterNotes(currentTag, setNotes, setCurrentNote, currentNote);
   }
 };
 
-export const deleteNote = async (id, setNotes, setCurrentNote) => {
+export const deleteNote = async (
+  id,
+  setNotes,
+  setCurrentNote,
+  setCurrentTags
+) => {
   const { data, error } = await supabase
     .from("notes")
     .update({ status: false })
@@ -107,10 +142,10 @@ export const deleteNote = async (id, setNotes, setCurrentNote) => {
     throw error;
   }
 
-  getNotes(setNotes, setCurrentNote, "");
+  getNotes(setNotes, setCurrentNote, "", setCurrentTags);
 };
 
-export const newNote = async (setNotes, setCurrentNote) => {
+export const newNote = async (setNotes, setCurrentNote, setCurrentTags) => {
   const { data, error } = await supabase.from("notes").insert([
     {
       title: "New note",
@@ -122,29 +157,66 @@ export const newNote = async (setNotes, setCurrentNote) => {
     throw error;
   }
 
-  getNotes(setNotes, setCurrentNote, "");
+  getNotes(setNotes, setCurrentNote, "", setCurrentTags);
 };
 
-export const newTag = async (tag, setTags) => {
-  const { data, error } = await supabase.from("tags").insert([
+export const newTag = async (
+  tag,
+  tags,
+  setTags,
+  currentNote,
+  setCurrentTags
+) => {
+  let newtag = tags.find((item) => item.name === tag.name);
+  let finalData = {};
+
+  if (!newtag) {
+    console.log("pasa");
+    const { data, error } = await supabase.from("tags").insert([
+      {
+        name: tag.name,
+      },
+    ]);
+
+    if (error) {
+      console.log(error.message);
+      throw error;
+    }
+    finalData = data;
+  } else {
+    const { data, error } = await supabase
+      .from("tags")
+      .select()
+      .filter("name", "eq", tag.name);
+
+    if (error) {
+      console.log(error.message);
+      throw error;
+    }
+    finalData = data;
+  }
+
+  const { data2, error2 } = await supabase.from("notetag").insert([
     {
-      name: tag.name,
+      note_id: currentNote.id,
+      tag_id: finalData[0].id,
     },
   ]);
 
-  if (error) {
-    console.log(error.message);
-    throw error;
+  if (error2) {
+    console.log(error2.message);
+    throw error2;
   }
 
   getTags(setTags);
+  getCurrentTags(currentNote, setCurrentTags);
 };
 
-export const deleteTag = async (tag, setTags) => {
+export const deleteTag = async (tag, setTags, setCurrentTags, currentNote) => {
   const { data, error } = await supabase
-    .from("tags")
+    .from("notetag")
     .delete()
-    .match({ id: tag[0].id });
+    .match({ tag_id: tag[0].id, note_id: currentNote.id });
 
   if (error) {
     console.log(error.message);
@@ -152,4 +224,30 @@ export const deleteTag = async (tag, setTags) => {
   }
 
   getTags(setTags);
+  getCurrentTags(currentNote, setCurrentTags);
+};
+
+export const removeTag = async (tag, setTags, setCurrentTags, currentNote) => {
+  const { data, error } = await supabase
+    .from("notetag")
+    .delete()
+    .match({ tag_id: tag.id });
+
+  if (error) {
+    console.log(error.message);
+    throw error;
+  }
+
+  const { data2, error2 } = await supabase
+    .from("tags")
+    .delete()
+    .match({ id: tag.id });
+
+  if (error2) {
+    console.log(error2.message);
+    throw error2;
+  }
+
+  getTags(setTags);
+  getCurrentTags(currentNote, setCurrentTags);
 };

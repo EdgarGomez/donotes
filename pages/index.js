@@ -40,6 +40,7 @@ export default function Notes() {
 
   const [notes, setNotes] = useState([]);
   const [currentNote, setCurrentNote] = useState(false);
+  const [currentTags, setCurrentTags] = useState([]);
   const [currentTag, setCurrentTag] = useState("");
   const [preview, setPreview] = useState(false);
   const [tags, setTags] = useState([]);
@@ -57,32 +58,39 @@ export default function Notes() {
     });
   };
 
+  const removeTag = (tag) => {
+    const deletetag = currentTags.slice(0);
+    const deletetaginfo = deletetag.splice(tag, 1);
+    deleteTag(deletetaginfo, setTags, setCurrentTags, currentNote);
+  };
+
+  const addTag = (tag) => {
+    tag.name = tag.name.toLowerCase();
+    let newtag = currentTags.find((item) => item.name === tag.name);
+    if (!newtag) {
+      newTag(tag, tags, setTags, currentNote, setCurrentTags);
+    }
+  };
+
   useEffect(() => {
     onOpen();
     const timeoutId = setTimeout(
-      () => saveNote(currentNote, setNotes, setCurrentNote, currentTag),
-
+      () =>
+        saveNote(
+          currentNote,
+          setNotes,
+          setCurrentNote,
+          currentTag,
+          setCurrentTags
+        ),
       1000
     );
     return () => clearTimeout(timeoutId);
   }, [currentNote.title, currentNote.content]);
 
   useEffect(async () => {
-    getNotes(setNotes, setCurrentNote, "");
+    getNotes(setNotes, setCurrentNote, "", setCurrentTags);
   }, []);
-
-  const removeTag = (tag) => {
-    const deletetag = tags.slice(0);
-    const deletetaginfo = deletetag.splice(tag, 1);
-    deleteTag(deletetaginfo, setTags);
-  };
-
-  const addTag = (tag) => {
-    let newtag = tags.find((item) => item.name === tag.name);
-    if (!newtag) {
-      newTag(tag, setTags);
-    }
-  };
 
   const suggestions = [
     { id: 3, name: "Bananas" },
@@ -95,11 +103,13 @@ export default function Notes() {
     <>
       <Hotkeys
         keyName="shift+n"
-        onKeyDown={() => newNote(setNotes, setCurrentNote)}
+        onKeyDown={() => newNote(setNotes, setCurrentNote, setCurrentTags)}
       />
       <Hotkeys
         keyName="shift+d"
-        onKeyDown={() => deleteNote(currentNote.id, setNotes, setCurrentNote)}
+        onKeyDown={() =>
+          deleteNote(currentNote.id, setNotes, setCurrentNote, setCurrentTags)
+        }
       />
       <Hotkeys keyName="shift+t" onKeyDown={() => showToolbar()} />
       <Hotkeys keyName="shift+s" onKeyDown={() => onToggle()} />
@@ -132,6 +142,8 @@ export default function Notes() {
                     setCurrentNote={setCurrentNote}
                     tags={tags}
                     setTags={setTags}
+                    setCurrentTags={setCurrentTags}
+                    currentNote={currentNote}
                   />
                 </Box>
                 <Box>
@@ -148,7 +160,9 @@ export default function Notes() {
                     size="md"
                     icon={<FilePlus />}
                     variant="ghost"
-                    onClick={() => newNote(setNotes, setCurrentNote)}
+                    onClick={() =>
+                      newNote(setNotes, setCurrentNote, setCurrentTags)
+                    }
                   />
                 </Box>
               </HStack>
@@ -213,7 +227,12 @@ export default function Notes() {
                 icon={<Trash />}
                 variant="ghost"
                 onClick={() =>
-                  deleteNote(currentNote.id, setNotes, setCurrentNote)
+                  deleteNote(
+                    currentNote.id,
+                    setNotes,
+                    setCurrentNote,
+                    setCurrentTags
+                  )
                 }
               />
             </Box>
@@ -229,14 +248,6 @@ export default function Notes() {
               fontSize="22px"
               name="title"
             />
-            {/*<SunEditor
-              setContents={currentNoteContent}
-              onChange={(content) => setCurrentNoteContent(content)}
-              showToolbar={viewToolbar}
-              height="90vh"
-              resize="none"
-              setDefaultStyle="font-size: 16px;"
-            />*/}
             {preview ? (
               <Box h="90vh">
                 <ReactMarkdown
@@ -261,7 +272,7 @@ export default function Notes() {
             <Box position="absolute" bottom="5px" w="100%" left="0">
               <ReactTags
                 //ref={this.reactTags}
-                tags={tags}
+                tags={currentTags}
                 suggestions={tags}
                 onDelete={removeTag}
                 onAddition={addTag}
