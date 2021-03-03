@@ -32,6 +32,7 @@ import {
 } from "@chakra-ui/react";
 import { Menu, Trash } from "react-feather";
 import Hotkeys from "react-hot-keys";
+import LightMode from "./LightMode";
 
 export default function MenuDrawer({
   setCurrentTag,
@@ -144,9 +145,7 @@ export default function MenuDrawer({
             </DrawerBody>
 
             <DrawerFooter>
-              <Button variant="outline" mr={3} onClick={onClose}>
-                Cancel
-              </Button>
+              <LightMode />
               <Button color="blue">Save</Button>
             </DrawerFooter>
           </DrawerContent>

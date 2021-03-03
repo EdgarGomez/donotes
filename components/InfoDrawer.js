@@ -49,7 +49,7 @@ export default function InfoDrawer({
   const [state, setState] = useState({});
 
   const wordCount = () => {
-    if (currentNote) {
+    if (currentNote && currentNote.content != null) {
       let wc = currentNote.content.match(/\S+/g);
       let charactersNoSpaces = currentNote.content.replace(/\s+/g, "").length;
       let characters = currentNote.content.length;

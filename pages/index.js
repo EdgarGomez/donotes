@@ -10,7 +10,6 @@ import {
 } from "@/utils/supabase-client";
 import {
   Box,
-  Text,
   Heading,
   Input,
   Textarea,
@@ -22,8 +21,7 @@ import {
   useDisclosure,
   Tooltip,
 } from "@chakra-ui/react";
-import { FilePlus, Menu, Trash, Sidebar, Eye, ThumbsUp } from "react-feather";
-import Moment from "react-moment";
+import { FilePlus, Trash, Sidebar, Eye, ThumbsUp } from "react-feather";
 import Hotkeys from "react-hot-keys";
 import { useState, useEffect } from "react";
 import Shortcuts from "@/components/Shortcuts";
@@ -115,7 +113,7 @@ export default function Notes() {
       <Hotkeys keyName="shift+s" onKeyDown={() => onToggle()} />
       <Hotkeys keyName="shift+p" onKeyDown={() => setPreview(!preview)} />
 
-      <Box height="100vh" width="100%" display="flex" color="black">
+      <Box height="100vh" width="100%" display="flex">
         <Collapse in={isOpen} animateOpacity className="collapse-aside">
           <Box
             as="aside"
@@ -325,7 +323,8 @@ export default function Notes() {
               />
             )}
             <Box position="absolute" bottom="5px" w="100%" left="0">
-              <ReactTags
+              <Input
+                as={ReactTags}
                 //ref={this.reactTags}
                 tags={currentTags}
                 suggestions={tags}
