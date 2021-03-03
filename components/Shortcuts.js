@@ -11,6 +11,7 @@ import {
   IconButton,
   Text,
   Heading,
+  Tooltip,
 } from "@chakra-ui/react";
 import { Command } from "react-feather";
 
@@ -22,14 +23,15 @@ export default function Shortcuts() {
   return (
     <>
       <Hotkeys keyName="shift+/" onKeyDown={() => onOpen()} />
-      <IconButton
-        colorScheme="blue"
-        size="md"
-        icon={<Command />}
-        variant="ghost"
-        onClick={onOpen}
-      />
-
+      <Tooltip hasArrow label="Shortcuts" colorScheme="blue">
+        <IconButton
+          colorScheme="blue"
+          size="md"
+          icon={<Command />}
+          variant="ghost"
+          onClick={onOpen}
+        />
+      </Tooltip>
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>

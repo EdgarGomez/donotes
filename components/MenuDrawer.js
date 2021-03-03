@@ -6,6 +6,7 @@ import {
   getTags,
   getFilterNotes,
   removeTag,
+  getTrashNotes,
 } from "@/utils/supabase-client";
 import { useState, useEffect } from "react";
 import {
@@ -27,11 +28,12 @@ import {
   TagLabel,
   TagRightIcon,
   HStack,
+  Tooltip,
 } from "@chakra-ui/react";
 import { Menu, Trash } from "react-feather";
 import Hotkeys from "react-hot-keys";
 
-export default function Drawer({
+export default function MenuDrawer({
   setCurrentTag,
   setNotes,
   setCurrentNote,
@@ -46,6 +48,9 @@ export default function Drawer({
     setCurrentTag(tag);
     if (tag === "") {
       getNotes(setNotes, setCurrentNote, "", setCurrentTags);
+    } else if (tag === "Trash") {
+      getTrashNotes(setNotes, setCurrentNote, "", setCurrentTags);
+      setCurrentTag({ ["name"]: "Trash" });
     } else {
       getFilterNotes(tag, setNotes, setCurrentNote, "");
     }
@@ -63,14 +68,15 @@ export default function Drawer({
   return (
     <>
       <Hotkeys keyName="shift+q" onKeyDown={() => onOpen()} />
-      <IconButton
-        colorScheme="blue"
-        size="md"
-        icon={<Menu />}
-        variant="ghost"
-        onClick={onOpen}
-      />
-
+      <Tooltip hasArrow label="Menu" colorScheme="blue">
+        <IconButton
+          colorScheme="blue"
+          size="md"
+          icon={<Menu />}
+          variant="ghost"
+          onClick={onOpen}
+        />
+      </Tooltip>
       <ChakraDrawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay>
           <DrawerContent>
@@ -84,8 +90,12 @@ export default function Drawer({
                 >
                   All Notes
                 </Button>
-                <Button colorScheme="blue" w="100%">
-                  Trash
+                <Button
+                  colorScheme="blue"
+                  w="100%"
+                  onClick={() => selectTag("Trash")}
+                >
+                  Deleted Notes
                 </Button>
               </Box>
               <Box px="15px" py="15px">
@@ -113,13 +123,19 @@ export default function Drawer({
                         >
                           {tag.name}
                         </Tag>
-                        <IconButton
-                          colorScheme="red"
-                          size="sm"
-                          icon={<Trash />}
-                          variant="ghost"
-                          onClick={() => deleteTag(tag)}
-                        />
+                        <Tooltip
+                          hasArrow
+                          label="Delete tag forever"
+                          colorScheme="blue"
+                        >
+                          <IconButton
+                            colorScheme="red"
+                            size="sm"
+                            icon={<Trash />}
+                            variant="ghost"
+                            onClick={() => deleteTag(tag)}
+                          />
+                        </Tooltip>
                       </HStack>
                     </ListItem>
                   ))}

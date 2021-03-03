@@ -3,8 +3,10 @@ import {
   saveNote,
   newNote,
   deleteNote,
+  deleteForeverNote,
   deleteTag,
   newTag,
+  restoreNote,
 } from "@/utils/supabase-client";
 import {
   Box,
@@ -18,13 +20,15 @@ import {
   HStack,
   Collapse,
   useDisclosure,
+  Tooltip,
 } from "@chakra-ui/react";
-import { FilePlus, Menu, Trash, Sidebar, Eye } from "react-feather";
+import { FilePlus, Menu, Trash, Sidebar, Eye, ThumbsUp } from "react-feather";
 import Moment from "react-moment";
 import Hotkeys from "react-hot-keys";
 import { useState, useEffect } from "react";
 import Shortcuts from "@/components/Shortcuts";
-import Drawer from "@/components/Drawer";
+import MenuDrawer from "@/components/MenuDrawer";
+import InfoDrawer from "@/components/InfoDrawer";
 import ReactMarkdown from "react-markdown";
 import gfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -92,17 +96,13 @@ export default function Notes() {
     getNotes(setNotes, setCurrentNote, "", setCurrentTags);
   }, []);
 
-  const suggestions = [
-    { id: 3, name: "Bananas" },
-    { id: 4, name: "Bangos" },
-    { id: 5, name: "Lemons" },
-    { id: 6, name: "Apricots" },
-  ];
-
   return (
     <>
       <Hotkeys
-        keyName="shift+n"
+        keyName="shift+alt+n"
+        filter={(event) => {
+          return true;
+        }}
         onKeyDown={() => newNote(setNotes, setCurrentNote, setCurrentTags)}
       />
       <Hotkeys
@@ -136,7 +136,7 @@ export default function Notes() {
               <HStack w="100%" justify="space-between">
                 <Box>
                   {" "}
-                  <Drawer
+                  <MenuDrawer
                     setCurrentTag={setCurrentTag}
                     setNotes={setNotes}
                     setCurrentNote={setCurrentNote}
@@ -155,20 +155,22 @@ export default function Notes() {
                 </Box>
                 <Box>
                   {" "}
-                  <IconButton
-                    colorScheme="blue"
-                    size="md"
-                    icon={<FilePlus />}
-                    variant="ghost"
-                    onClick={() =>
-                      newNote(setNotes, setCurrentNote, setCurrentTags)
-                    }
-                  />
+                  <Tooltip hasArrow label="New note" colorScheme="blue">
+                    <IconButton
+                      colorScheme="blue"
+                      size="md"
+                      icon={<FilePlus />}
+                      variant="ghost"
+                      onClick={() =>
+                        newNote(setNotes, setCurrentNote, setCurrentTags)
+                      }
+                    />
+                  </Tooltip>
                 </Box>
               </HStack>
             </Box>
 
-            <Box px="15px" py="15px">
+            <Box px="15px" py="15px" overflowY="scroll" height="95vh">
               <List className="notes-list">
                 {notes.map((note, i) => (
                   <ListItem
@@ -204,36 +206,89 @@ export default function Notes() {
             display="flex"
             justify="space-between"
           >
-            <IconButton
-              colorScheme="blue"
-              size="md"
-              icon={<Sidebar />}
-              variant="ghost"
-              onClick={onToggle}
-            />
-            <Box>
+            <Tooltip hasArrow label="Focus mode" colorScheme="blue">
               <IconButton
                 colorScheme="blue"
                 size="md"
-                icon={<Eye />}
+                icon={<Sidebar />}
                 variant="ghost"
-                onClick={() => setPreview(!preview)}
+                onClick={onToggle}
               />
+            </Tooltip>
+            <Box>
+              <Tooltip hasArrow label="Preview mode" colorScheme="blue">
+                <IconButton
+                  colorScheme="blue"
+                  size="md"
+                  icon={<Eye />}
+                  variant="ghost"
+                  onClick={() => setPreview(!preview)}
+                />
+              </Tooltip>
               <Shortcuts />
-              <IconButton
-                colorScheme="blue"
-                aria-label="delete"
-                size="md"
-                icon={<Trash />}
-                variant="ghost"
-                onClick={() =>
-                  deleteNote(
-                    currentNote.id,
-                    setNotes,
-                    setCurrentNote,
-                    setCurrentTags
-                  )
-                }
+              {currentTag.name === "Trash" ? (
+                <>
+                  <Tooltip hasArrow label="Restore note" colorScheme="green">
+                    <IconButton
+                      colorScheme="green"
+                      size="md"
+                      icon={<ThumbsUp />}
+                      variant="ghost"
+                      onClick={() =>
+                        restoreNote(
+                          currentNote.id,
+                          setNotes,
+                          setCurrentNote,
+                          setCurrentTags
+                        )
+                      }
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Delete forever" colorScheme="red">
+                    <IconButton
+                      colorScheme="red"
+                      aria-label="delete"
+                      size="md"
+                      icon={<Trash />}
+                      variant="ghost"
+                      onClick={() =>
+                        deleteForeverNote(
+                          currentNote.id,
+                          setNotes,
+                          setCurrentNote,
+                          setCurrentTags
+                        )
+                      }
+                    />
+                  </Tooltip>
+                </>
+              ) : (
+                <Tooltip hasArrow label="Trash" colorScheme="blue">
+                  <IconButton
+                    colorScheme="blue"
+                    aria-label="delete"
+                    size="md"
+                    icon={<Trash />}
+                    variant="ghost"
+                    onClick={() =>
+                      deleteNote(
+                        currentNote.id,
+                        setNotes,
+                        setCurrentNote,
+                        setCurrentTags
+                      )
+                    }
+                  />
+                </Tooltip>
+              )}
+              <InfoDrawer
+                setCurrentTag={setCurrentTag}
+                setNotes={setNotes}
+                setCurrentNote={setCurrentNote}
+                tags={tags}
+                setTags={setTags}
+                setCurrentTags={setCurrentTags}
+                currentNote={currentNote}
               />
             </Box>
           </HStack>
