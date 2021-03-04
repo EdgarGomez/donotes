@@ -30,7 +30,7 @@ import {
   HStack,
   Tooltip,
 } from "@chakra-ui/react";
-import { Menu, Trash } from "react-feather";
+import { Menu, Trash, Settings } from "react-feather";
 import Hotkeys from "react-hot-keys";
 import LightMode from "./LightMode";
 
@@ -145,8 +145,15 @@ export default function MenuDrawer({
             </DrawerBody>
 
             <DrawerFooter>
-              <LightMode />
-              <Button color="blue">Save</Button>
+              <HStack justify="space-between">
+                <LightMode />
+                <IconButton
+                  colorScheme="blue"
+                  size="md"
+                  icon={<Settings />}
+                  variant="solid"
+                />
+              </HStack>
             </DrawerFooter>
           </DrawerContent>
         </DrawerOverlay>

@@ -5,11 +5,11 @@ import "../styles/globals.css";
 
 function MyApp({ Component, pageProps }) {
   return (
-    <UserContextProvider>
-      <ChakraProvider resetCSS theme={theme}>
+    <ChakraProvider resetCSS theme={theme}>
+      <UserContextProvider>
         <Component {...pageProps} />
-      </ChakraProvider>
-    </UserContextProvider>
+      </UserContextProvider>
+    </ChakraProvider>
   );
 }
 
