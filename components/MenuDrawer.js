@@ -30,7 +30,7 @@ import {
   HStack,
   Tooltip,
 } from "@chakra-ui/react";
-import { Menu, Trash, Settings } from "react-feather";
+import { Menu, Trash, Settings, LogOut } from "react-feather";
 import Hotkeys from "react-hot-keys";
 import LightMode from "./LightMode";
 
@@ -42,28 +42,32 @@ export default function MenuDrawer({
   setTags,
   setCurrentTags,
   currentNote,
+  userid,
+  signOut,
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const selectTag = (tag) => {
-    setCurrentTag(tag);
-    if (tag === "") {
-      getNotes(setNotes, setCurrentNote, "", setCurrentTags);
-    } else if (tag === "Trash") {
-      getTrashNotes(setNotes, setCurrentNote, "", setCurrentTags);
-      setCurrentTag({ ["name"]: "Trash" });
-    } else {
-      getFilterNotes(tag, setNotes, setCurrentNote, "");
+    if (userid) {
+      setCurrentTag(tag);
+      if (tag === "") {
+        getNotes(setNotes, setCurrentNote, "", setCurrentTags, userid);
+      } else if (tag === "Trash") {
+        getTrashNotes(setNotes, setCurrentNote, "", setCurrentTags, userid);
+        setCurrentTag({ ["name"]: "Trash" });
+      } else {
+        getFilterNotes(tag, setNotes, setCurrentNote, "", userid);
+      }
+      onClose();
     }
-    onClose();
   };
 
   const deleteTag = (tag) => {
-    removeTag(tag, setTags, setCurrentTags, currentNote);
+    if (userid) removeTag(tag, setTags, setCurrentTags, currentNote, userid);
   };
 
   useEffect(async () => {
-    getTags(setTags);
+    if (userid) getTags(setTags, userid);
   }, []);
 
   return (
@@ -144,16 +148,22 @@ export default function MenuDrawer({
               </Box>
             </DrawerBody>
 
-            <DrawerFooter>
-              <HStack justify="space-between">
-                <LightMode />
-                <IconButton
-                  colorScheme="blue"
-                  size="md"
-                  icon={<Settings />}
-                  variant="solid"
-                />
-              </HStack>
+            <DrawerFooter display="flex" justifyContent="space-between">
+              <IconButton
+                colorScheme="blue"
+                size="md"
+                icon={<LogOut />}
+                onClick={() => signOut()}
+                variant="solid"
+              />
+
+              <LightMode />
+              <IconButton
+                colorScheme="blue"
+                size="md"
+                icon={<Settings />}
+                variant="solid"
+              />
             </DrawerFooter>
           </DrawerContent>
         </DrawerOverlay>

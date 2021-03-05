@@ -1,10 +1,22 @@
 import { Box, Center, Button } from "@chakra-ui/react";
+import { useEffect } from "react";
+import { saveUserInfo } from "@/utils/supabase-client";
 import { supabase } from "@/utils/initSupabase";
 import { Auth } from "@supabase/ui";
 import { useUser } from "@/components/UserContext";
 import Link from "next/link";
 export default function Home() {
   const { user, signOut } = useUser();
+  useEffect(async () => {
+    if (user) {
+      console.log(user);
+      saveUserInfo(
+        user.id,
+        user.user_metadata && user.user_metadata.full_name,
+        user.email
+      );
+    }
+  }, [user]);
   return (
     <>
       {user ? (

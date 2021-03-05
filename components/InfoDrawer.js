@@ -61,7 +61,7 @@ export default function InfoDrawer({
 
   useEffect(async () => {
     wordCount();
-  }, [currentNote.content]);
+  }, [currentNote && currentNote.content]);
 
   return (
     <>
@@ -87,7 +87,7 @@ export default function InfoDrawer({
                     borderTop="0"
                     py="5px"
                   >
-                    <Text>Note title: {currentNote.title}</Text>
+                    <Text>Note title: {currentNote && currentNote.title}</Text>
                   </ListItem>
 
                   <ListItem
@@ -143,10 +143,12 @@ export default function InfoDrawer({
                   >
                     <Text>
                       Created{" "}
-                      <Moment to={currentNote.created_at}>{Date.now()}</Moment>{" "}
+                      <Moment to={currentNote && currentNote.created_at}>
+                        {Date.now()}
+                      </Moment>{" "}
                       (
                       <Moment format="DD/MM/YYYY - hh:mm:ss">
-                        {currentNote.created_at}
+                        {currentNote && currentNote.created_at}
                       </Moment>
                       )
                     </Text>
@@ -161,9 +163,12 @@ export default function InfoDrawer({
                   >
                     <Text>
                       Last time edited{" "}
-                      <Moment to={currentNote.edited_at}>{Date.now()}</Moment> (
+                      <Moment to={currentNote && currentNote.edited_at}>
+                        {Date.now()}
+                      </Moment>{" "}
+                      (
                       <Moment format="DD/MM/YYYY">
-                        {currentNote.edited_at}
+                        {currentNote && currentNote.edited_at}
                       </Moment>
                       )
                     </Text>

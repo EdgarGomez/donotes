@@ -22,6 +22,7 @@ import {
   Tooltip,
   InputGroup,
   InputRightElement,
+  useColorMode,
 } from "@chakra-ui/react";
 import { FilePlus, Trash, Sidebar, Eye, ThumbsUp, Search } from "react-feather";
 import Hotkeys from "react-hot-keys";
@@ -37,7 +38,8 @@ import { useUser } from "@/components/UserContext";
 import { useRouter } from "next/router";
 
 export default function App() {
-  const { user } = useUser();
+  const { colorMode, toggleColorMode } = useColorMode();
+  const { user, signOut } = useUser();
   const router = useRouter();
   const renderers = {
     code: ({ language, value }) => {
@@ -69,39 +71,49 @@ export default function App() {
   const removeTag = (tag) => {
     const deletetag = currentTags.slice(0);
     const deletetaginfo = deletetag.splice(tag, 1);
-    deleteTag(deletetaginfo, setTags, setCurrentTags, currentNote);
+    if (user)
+      deleteTag(deletetaginfo, setTags, setCurrentTags, currentNote, user.id);
   };
 
   const addTag = (tag) => {
     tag.name = tag.name.toLowerCase();
     let newtag = currentTags.find((item) => item.name === tag.name);
-    if (!newtag) {
-      newTag(tag, tags, setTags, currentNote, setCurrentTags);
+    if (!newtag && user) {
+      newTag(tag, tags, setTags, currentNote, setCurrentTags, user.id);
     }
   };
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!user) router.replace("/");
-  }, [user]);
+  }, [user]);*/
 
   useEffect(() => {
-    onOpen();
-    const timeoutId = setTimeout(
-      () =>
-        saveNote(
-          currentNote,
-          setNotes,
-          setCurrentNote,
-          currentTag,
-          setCurrentTags
-        ),
-      1000
-    );
-    return () => clearTimeout(timeoutId);
-  }, [currentNote.title, currentNote.content]);
+    if (!user) {
+      router.replace("/");
+    } else {
+      onOpen();
+      const timeoutId = setTimeout(
+        () =>
+          saveNote(
+            currentNote,
+            setNotes,
+            setCurrentNote,
+            currentTag,
+            setCurrentTags,
+            user.id
+          ),
+        1000
+      );
+      return () => clearTimeout(timeoutId);
+    }
+  }, [currentNote && currentNote.title, currentNote && currentNote.content]);
 
   useEffect(async () => {
-    getNotes(setNotes, setCurrentNote, "", setCurrentTags);
+    if (!user) {
+      router.replace("/");
+    } else {
+      getNotes(setNotes, setCurrentNote, "", setCurrentTags, user.id);
+    }
   }, []);
 
   const [searchValue, setSearchValue] = useState("");
@@ -110,6 +122,7 @@ export default function App() {
     notes.title.toLowerCase().includes(searchValue.toLowerCase())
   );
 
+  if (!user) return "Loading...";
   return (
     <>
       <Hotkeys
@@ -117,12 +130,21 @@ export default function App() {
         filter={(event) => {
           return true;
         }}
-        onKeyDown={() => newNote(setNotes, setCurrentNote, setCurrentTags)}
+        onKeyDown={() =>
+          user && newNote(setNotes, setCurrentNote, setCurrentTags, user.id)
+        }
       />
       <Hotkeys
         keyName="shift+d"
         onKeyDown={() =>
-          deleteNote(currentNote.id, setNotes, setCurrentNote, setCurrentTags)
+          user &&
+          deleteNote(
+            currentNote.id,
+            setNotes,
+            setCurrentNote,
+            setCurrentTags,
+            user.id
+          )
         }
       />
       <Hotkeys keyName="shift+t" onKeyDown={() => showToolbar()} />
@@ -158,6 +180,8 @@ export default function App() {
                     setTags={setTags}
                     setCurrentTags={setCurrentTags}
                     currentNote={currentNote}
+                    userid={user.id}
+                    signOut={signOut}
                   />
                 </Box>
                 <Box>
@@ -176,7 +200,13 @@ export default function App() {
                       icon={<FilePlus />}
                       variant="ghost"
                       onClick={() =>
-                        newNote(setNotes, setCurrentNote, setCurrentTags)
+                        user &&
+                        newNote(
+                          setNotes,
+                          setCurrentNote,
+                          setCurrentTags,
+                          user.id
+                        )
                       }
                     />
                   </Tooltip>
@@ -206,11 +236,13 @@ export default function App() {
                     py="5px"
                     cursor="pointer"
                     bgGradient={
-                      currentNote.id === note.id
+                      currentNote && currentNote.id === note.id
                         ? "linear(to-r, blue.500, blue.100)"
                         : ""
                     }
-                    color={currentNote.id === note.id ? "white" : ""}
+                    color={
+                      currentNote && currentNote.id === note.id ? "white" : ""
+                    }
                   >
                     <Box w="100%">{note.title}</Box>
                   </ListItem>
@@ -258,11 +290,13 @@ export default function App() {
                       icon={<ThumbsUp />}
                       variant="ghost"
                       onClick={() =>
+                        user &&
                         restoreNote(
                           currentNote.id,
                           setNotes,
                           setCurrentNote,
-                          setCurrentTags
+                          setCurrentTags,
+                          user.id
                         )
                       }
                     />
@@ -275,11 +309,13 @@ export default function App() {
                       icon={<Trash />}
                       variant="ghost"
                       onClick={() =>
+                        user &&
                         deleteForeverNote(
                           currentNote.id,
                           setNotes,
                           setCurrentNote,
-                          setCurrentTags
+                          setCurrentTags,
+                          user.id
                         )
                       }
                     />
@@ -294,11 +330,13 @@ export default function App() {
                     icon={<Trash />}
                     variant="ghost"
                     onClick={() =>
+                      user &&
                       deleteNote(
                         currentNote.id,
                         setNotes,
                         setCurrentNote,
-                        setCurrentTags
+                        setCurrentTags,
+                        user.id
                       )
                     }
                   />
@@ -316,23 +354,34 @@ export default function App() {
             </Box>
           </HStack>
           <Box overflow="scroll" position="relative" w="50%" mx="auto">
+            {!currentNote && (
+              <Box
+                position="absolute"
+                width="100%"
+                height="100%"
+                bg="#1A202C"
+                zIndex="99"
+              ></Box>
+            )}
+
             <Input
               variant="unstyled"
               placeholder="New note"
-              value={currentNote.title || ""}
+              value={(currentNote && currentNote.title) || ""}
               onChange={handleFormChange}
               w="100%"
               height="5vh"
               fontSize="22px"
               name="title"
             />
+
             {preview ? (
               <Box h="90vh">
                 <ReactMarkdown
                   plugins={[gfm]}
                   renderers={renderers}
                   allowDangerousHtml
-                  children={currentNote.content || ""}
+                  children={(currentNote && currentNote.content) || ""}
                   className="content-preview"
                 />
               </Box>
@@ -341,7 +390,7 @@ export default function App() {
                 variant="unstyled"
                 placeholder="Content"
                 height="90vh"
-                value={currentNote.content || ""}
+                value={(currentNote && currentNote.content) || ""}
                 onChange={handleFormChange}
                 resize="none"
                 w="100%"
@@ -355,6 +404,7 @@ export default function App() {
               w="100%"
               left="0"
               hidden={preview}
+              className={colorMode}
             >
               <Input
                 as={ReactTags}

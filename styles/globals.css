@@ -32,10 +32,11 @@ a {
   display: none !important;
 }
 
-.react-tags {
+/* TAGS BOX */
+.light .react-tags {
   position: relative;
   padding: 6px 0 0 6px;
-  border: 1px solid #d1d1d1;
+  border: 1px solid #90cdf4;
   border-radius: 1px;
   background: white;
   /* shared font styles */
@@ -46,15 +47,33 @@ a {
   cursor: text;
 }
 
-.react-tags.is-focused {
+.dark .react-tags {
+  position: relative;
+  padding: 6px 0 0 6px;
+  border: 1px solid #90cdf4;
+  border-radius: 1px;
+  background: #1a202c;
+  /* shared font styles */
+  font-size: 1em;
+  line-height: 1.2;
+
+  /* clicking anywhere will focus the input */
+  cursor: text;
+}
+
+.light .react-tags.is-focused {
   border-color: #b1b1b1;
+}
+
+.dark .react-tags.is-focused {
+  border-color: #90cdf4;
 }
 
 .react-tags__selected {
   display: inline;
 }
 
-.react-tags__selected-tag {
+.light .react-tags__selected-tag {
   display: inline-block;
   box-sizing: border-box;
   margin: 0 6px 6px 0;
@@ -68,14 +87,39 @@ a {
   line-height: inherit;
 }
 
-.react-tags__selected-tag:after {
+.dark .react-tags__selected-tag {
+  display: inline-block;
+  box-sizing: border-box;
+  margin: 0 6px 6px 0;
+  padding: 6px 8px;
+  border: 1px solid #90cdf4;
+  border-radius: 2px;
+  background: #1a202c;
+
+  /* match the font styles */
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.light .react-tags__selected-tag:after {
   content: "\2715";
   color: #aaa;
   margin-left: 8px;
 }
 
-.react-tags__selected-tag:hover,
-.react-tags__selected-tag:focus {
+.dark .react-tags__selected-tag:after {
+  content: "\2715";
+  color: #aaa;
+  margin-left: 8px;
+}
+
+.light .react-tags__selected-tag:hover,
+.light .react-tags__selected-tag:focus {
+  border-color: #b1b1b1;
+}
+
+.dark .react-tags__selected-tag:hover,
+.dark .react-tags__selected-tag:focus {
   border-color: #b1b1b1;
 }
 
@@ -112,6 +156,10 @@ a {
   line-height: inherit;
 }
 
+.dark .react-tags__search-input {
+  background-color: #1a202c;
+}
+
 .react-tags__search-input::-ms-clear {
   display: none;
 }
@@ -129,7 +177,7 @@ a {
   }
 }
 
-.react-tags__suggestions ul {
+.light .react-tags__suggestions ul {
   margin: 4px -1px;
   padding: 0;
   list-style: none;
@@ -139,8 +187,24 @@ a {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.react-tags__suggestions li {
-  border-bottom: 1px solid #ddd;
+.dark .react-tags__suggestions ul {
+  margin: 4px -1px;
+  padding: 0;
+  list-style: none;
+  background: #1a202c;
+  border: 1px solid #90cdf4;
+  border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.light .react-tags__suggestions li {
+  border-bottom: 1px solid #d1d1d1;
+  padding: 6px 8px;
+}
+
+.dark .react-tags__suggestions li {
+  border-bottom: 1px solid #90cdf4;
   padding: 6px 8px;
 }
 
@@ -150,12 +214,21 @@ a {
   font-weight: 600;
 }
 
-.react-tags__suggestions li:hover {
+.light .react-tags__suggestions li:hover {
   cursor: pointer;
   background: #eee;
 }
 
-.react-tags__suggestions li.is-active {
+.dark .react-tags__suggestions li:hover {
+  cursor: pointer;
+  background: #eee;
+}
+
+.light .react-tags__suggestions li.is-active {
+  background: #b7cfe0;
+}
+
+.dark .react-tags__suggestions li.is-active {
   background: #b7cfe0;
 }
 
