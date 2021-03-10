@@ -140,7 +140,6 @@ export const getSharedNotes = async (
       }
     });
   }
-
   setNotes(notes);
   if (notes.length === 0) {
     setCurrentNote(false);
@@ -208,15 +207,6 @@ export const getFilterNotes = async (
       setCurrentNote(currentNote);
     }
   } else if (tag.name === "Shared") {
-    getSharedNotes(
-      setNotes,
-      setCurrentNote,
-      currentNote,
-      setCurrentTags,
-      userid,
-      email
-    );
-    return;
   } else {
     const { data, error } = await supabase
       .from("notes")
