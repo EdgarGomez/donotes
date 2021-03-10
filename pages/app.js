@@ -23,6 +23,7 @@ import {
   InputGroup,
   InputRightElement,
   useColorMode,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { FilePlus, Trash, Sidebar, Eye, ThumbsUp, Search } from "react-feather";
 import Hotkeys from "react-hot-keys";
@@ -36,6 +37,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import ReactTags from "react-tag-autocomplete";
 import { useUser } from "@/components/UserContext";
 import { useRouter } from "next/router";
+import ShareNote from "@/components/ShareNote";
 
 export default function App() {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -122,7 +124,8 @@ export default function App() {
     notes.title.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  if (!user) return "Loading...";
+  const bgColor = useColorModeValue("white", "#1A202C");
+
   return (
     <>
       <Hotkeys
@@ -180,13 +183,13 @@ export default function App() {
                     setTags={setTags}
                     setCurrentTags={setCurrentTags}
                     currentNote={currentNote}
-                    userid={user.id}
+                    user={user}
                     signOut={signOut}
                   />
                 </Box>
                 <Box>
                   <Heading fontSize="xl">
-                    {currentTag === ""
+                    {currentTag === "" && "Notes"
                       ? "Notes"
                       : `Notes filtered by ${currentTag.name}`}
                   </Heading>
@@ -261,16 +264,21 @@ export default function App() {
             display="flex"
             justify="space-between"
           >
-            <Tooltip hasArrow label="Focus mode" colorScheme="blue">
-              <IconButton
-                colorScheme="blue"
-                size="md"
-                icon={<Sidebar />}
-                variant="ghost"
-                onClick={onToggle}
-              />
-            </Tooltip>
             <Box>
+              <Tooltip hasArrow label="Focus mode" colorScheme="blue">
+                <IconButton
+                  colorScheme="blue"
+                  size="md"
+                  icon={<Sidebar />}
+                  variant="ghost"
+                  onClick={onToggle}
+                />
+              </Tooltip>
+              <Shortcuts />
+            </Box>
+            <Box>
+              <ShareNote currentNote={currentNote} />
+
               <Tooltip hasArrow label="Preview mode" colorScheme="blue">
                 <IconButton
                   colorScheme="blue"
@@ -278,9 +286,10 @@ export default function App() {
                   icon={<Eye />}
                   variant="ghost"
                   onClick={() => setPreview(!preview)}
+                  hidden={!currentNote}
                 />
               </Tooltip>
-              <Shortcuts />
+
               {currentTag.name === "Trash" ? (
                 <>
                   <Tooltip hasArrow label="Restore note" colorScheme="green">
@@ -289,6 +298,7 @@ export default function App() {
                       size="md"
                       icon={<ThumbsUp />}
                       variant="ghost"
+                      hidden={!currentNote}
                       onClick={() =>
                         user &&
                         restoreNote(
@@ -308,6 +318,7 @@ export default function App() {
                       size="md"
                       icon={<Trash />}
                       variant="ghost"
+                      hidden={!currentNote}
                       onClick={() =>
                         user &&
                         deleteForeverNote(
@@ -329,6 +340,7 @@ export default function App() {
                     size="md"
                     icon={<Trash />}
                     variant="ghost"
+                    hidden={!currentNote}
                     onClick={() =>
                       user &&
                       deleteNote(
@@ -359,7 +371,7 @@ export default function App() {
                 position="absolute"
                 width="100%"
                 height="100%"
-                bg="#1A202C"
+                bg={bgColor}
                 zIndex="99"
               ></Box>
             )}
@@ -398,24 +410,26 @@ export default function App() {
                 paddingBottom="100px"
               />
             )}
-            <Box
-              position="absolute"
-              bottom="5px"
-              w="100%"
-              left="0"
-              hidden={preview}
-              className={colorMode}
-            >
-              <Input
-                as={ReactTags}
-                //ref={this.reactTags}
-                tags={currentTags}
-                suggestions={tags}
-                onDelete={removeTag}
-                onAddition={addTag}
-                allowNew
-              />
-            </Box>
+            {currentTag.name != "Shared" && (
+              <Box
+                position="absolute"
+                bottom="5px"
+                w="100%"
+                left="0"
+                hidden={preview}
+                className={colorMode}
+              >
+                <Input
+                  as={ReactTags}
+                  //ref={this.reactTags}
+                  tags={currentTags}
+                  suggestions={tags}
+                  onDelete={removeTag}
+                  onAddition={addTag}
+                  allowNew
+                />
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>

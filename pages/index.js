@@ -9,7 +9,6 @@ export default function Home() {
   const { user, signOut } = useUser();
   useEffect(async () => {
     if (user) {
-      console.log(user);
       saveUserInfo(
         user.id,
         user.user_metadata && user.user_metadata.full_name,

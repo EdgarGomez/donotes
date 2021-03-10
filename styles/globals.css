@@ -347,3 +347,7 @@ a.sbui-typography-link {
 .content-preview {
   padding-bottom: 50px;
 }
+
+.sbui-input {
+  color: #000 !important;
+}

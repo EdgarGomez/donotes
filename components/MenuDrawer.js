@@ -1,8 +1,6 @@
 import {
   getNotes,
-  saveNote,
-  newNote,
-  deleteNote,
+  getSharedNotes,
   getTags,
   getFilterNotes,
   removeTag,
@@ -33,6 +31,7 @@ import {
 import { Menu, Trash, Settings, LogOut } from "react-feather";
 import Hotkeys from "react-hot-keys";
 import LightMode from "./LightMode";
+import { useRouter } from "next/router";
 
 export default function MenuDrawer({
   setCurrentTag,
@@ -42,32 +41,56 @@ export default function MenuDrawer({
   setTags,
   setCurrentTags,
   currentNote,
-  userid,
+  user,
   signOut,
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const router = useRouter();
 
   const selectTag = (tag) => {
-    if (userid) {
+    if (user) {
       setCurrentTag(tag);
       if (tag === "") {
-        getNotes(setNotes, setCurrentNote, "", setCurrentTags, userid);
+        getNotes(setNotes, setCurrentNote, "", setCurrentTags, user.id);
       } else if (tag === "Trash") {
-        getTrashNotes(setNotes, setCurrentNote, "", setCurrentTags, userid);
+        getTrashNotes(setNotes, setCurrentNote, "", setCurrentTags, user.id);
         setCurrentTag({ ["name"]: "Trash" });
+      } else if (tag === "Shared") {
+        getSharedNotes(
+          setNotes,
+          setCurrentNote,
+          "",
+          setCurrentTags,
+          user.id,
+          user.email
+        );
+        setCurrentTag({ ["name"]: "Shared" });
       } else {
-        getFilterNotes(tag, setNotes, setCurrentNote, "", userid);
+        getFilterNotes(
+          tag,
+          setNotes,
+          setCurrentNote,
+          "",
+          user.id,
+          user.email,
+          setCurrentTags
+        );
       }
       onClose();
     }
   };
 
   const deleteTag = (tag) => {
-    if (userid) removeTag(tag, setTags, setCurrentTags, currentNote, userid);
+    if (user) removeTag(tag, setTags, setCurrentTags, currentNote, user.id);
+  };
+
+  const logOut = () => {
+    signOut();
+    router.replace("/");
   };
 
   useEffect(async () => {
-    if (userid) getTags(setTags, userid);
+    if (user) getTags(setTags, user.id);
   }, []);
 
   return (
@@ -93,7 +116,15 @@ export default function MenuDrawer({
                   mb="20px"
                   onClick={() => selectTag("")}
                 >
-                  All Notes
+                  My Notes
+                </Button>
+                <Button
+                  colorScheme="blue"
+                  w="100%"
+                  mb="20px"
+                  onClick={() => selectTag("Shared")}
+                >
+                  Shared Notes
                 </Button>
                 <Button
                   colorScheme="blue"
@@ -153,7 +184,7 @@ export default function MenuDrawer({
                 colorScheme="blue"
                 size="md"
                 icon={<LogOut />}
-                onClick={() => signOut()}
+                onClick={() => logOut()}
                 variant="solid"
               />
 

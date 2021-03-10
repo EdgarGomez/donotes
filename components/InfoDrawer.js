@@ -71,6 +71,7 @@ export default function InfoDrawer({
         icon={<Info />}
         variant="ghost"
         onClick={onOpen}
+        hidden={!currentNote}
       />
       <ChakraDrawer isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay>

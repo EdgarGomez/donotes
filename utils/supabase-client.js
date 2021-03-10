@@ -5,6 +5,54 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+export const getShared = async (currentNote, setShared) => {
+  if (!currentNote) {
+    setShared([]);
+  } else {
+    const { data, error } = await supabase
+      .from("shared_notes")
+      .select()
+      .filter("note_id", "eq", currentNote.id)
+      .order("email", { ascending: false });
+    if (error) {
+      console.log(error.message);
+      throw error;
+    }
+
+    setShared(data);
+  }
+};
+
+export const newShared = async (currentNote, setShared, email) => {
+  const { data, error } = await supabase.from("shared_notes").insert([
+    {
+      note_id: currentNote.id,
+      email: email,
+    },
+  ]);
+
+  if (error) {
+    console.log(error.message);
+    throw error;
+  }
+
+  getShared(currentNote, setShared);
+};
+
+export const deleteShared = async (item, currentNote, setShared) => {
+  const { data, error } = await supabase
+    .from("shared_notes")
+    .delete()
+    .match({ id: item.id });
+
+  if (error) {
+    console.log(error.message);
+    throw error;
+  }
+
+  getShared(currentNote, setShared);
+};
+
 export const getNotes = async (
   setNotes,
   setCurrentNote,
@@ -63,27 +111,71 @@ export const getTrashNotes = async (
   }
 };
 
-export const getCurrentTags = async (currentNote, setCurrentTags, userid) => {
+export const getSharedNotes = async (
+  setNotes,
+  setCurrentNote,
+  currentNote,
+  setCurrentTags,
+  userid,
+  useremail
+) => {
   const { data, error } = await supabase
-    .from("notetag")
-    .select(`*, tags( * )`)
-    .filter("note_id", "eq", currentNote && currentNote.id)
-    .filter("tags.user_id", "eq", userid);
+    .from("notes")
+    .select(`*, shared_notes ( * )`)
+    .filter("shared_notes.email", "eq", useremail)
+    .filter("status", "eq", true);
 
   if (error) {
     console.log(error.message);
     throw error;
   }
-
-  let tags = [];
+  let finalData = data;
+  let notes = [];
   let i = 0;
+  if (finalData.length > 0) {
+    finalData.map((note) => {
+      if (note.shared_notes[0] && note.shared_notes[0].id != "") {
+        notes[i] = note;
+        i++;
+      }
+    });
+  }
 
-  data.map((tag) => {
-    tags[i] = tag.tags;
-    i++;
-  });
+  setNotes(notes);
+  if (notes.length === 0) {
+    setCurrentNote(false);
+  } else {
+    if (currentNote === "") {
+      setCurrentNote(notes[0]);
+    } else {
+      setCurrentNote(currentNote);
+    }
+  }
+};
 
-  setCurrentTags(tags);
+export const getCurrentTags = async (currentNote, setCurrentTags, userid) => {
+  if (currentNote) {
+    const { data, error } = await supabase
+      .from("notetag")
+      .select(`*, tags( * )`)
+      .filter("note_id", "eq", currentNote && currentNote.id)
+      .filter("tags.user_id", "eq", userid);
+
+    if (error) {
+      console.log(error.message);
+      throw error;
+    }
+
+    let tags = [];
+    let i = 0;
+
+    data.map((tag) => {
+      tags[i] = tag.tags;
+      i++;
+    });
+
+    setCurrentTags(tags);
+  }
 };
 
 export const getFilterNotes = async (
@@ -91,7 +183,9 @@ export const getFilterNotes = async (
   setNotes,
   setCurrentNote,
   currentNote,
-  userid
+  userid,
+  email,
+  setCurrentTags
 ) => {
   let finalData = false;
   if (tag.name === "Trash") {
@@ -113,6 +207,16 @@ export const getFilterNotes = async (
     } else {
       setCurrentNote(currentNote);
     }
+  } else if (tag.name === "Shared") {
+    getSharedNotes(
+      setNotes,
+      setCurrentNote,
+      currentNote,
+      setCurrentTags,
+      userid,
+      email
+    );
+    return;
   } else {
     const { data, error } = await supabase
       .from("notes")
@@ -165,7 +269,6 @@ export const getTags = async (setTags, userid) => {
 };
 
 export const saveUserInfo = async (id, name, email) => {
-  console.log("llego", email);
   const { data, error } = await supabase
     .from("users")
     .update({
@@ -178,7 +281,21 @@ export const saveUserInfo = async (id, name, email) => {
     console.log(error.message);
     throw error;
   }
-  console.log(data);
+};
+
+export const publishNote = async (currentNote, published, setPublished) => {
+  const { data, error } = await supabase
+    .from("notes")
+    .update({
+      published: published,
+    })
+    .match({ id: currentNote.id });
+
+  if (error) {
+    console.log(error.message);
+    throw error;
+  }
+  setPublished(data.published);
 };
 
 export const saveNote = async (
@@ -189,23 +306,25 @@ export const saveNote = async (
   setCurrentTags,
   userid
 ) => {
-  const { data, error } = await supabase
-    .from("notes")
-    .update({
-      title: currentNote && currentNote.title,
-      content: currentNote && currentNote.content,
-      edited_at: new Date().toISOString(),
-    })
-    .match({ id: currentNote && currentNote.id });
+  if (currentNote) {
+    const { data, error } = await supabase
+      .from("notes")
+      .update({
+        title: currentNote && currentNote.title,
+        content: currentNote && currentNote.content,
+        edited_at: new Date().toISOString(),
+      })
+      .match({ id: currentNote && currentNote.id });
 
-  if (error) {
-    console.log(error.message);
-    throw error;
-  }
-  if (currentTag == "") {
-    getNotes(setNotes, setCurrentNote, currentNote, setCurrentTags, userid);
-  } else {
-    getFilterNotes(currentTag, setNotes, setCurrentNote, currentNote, userid);
+    if (error) {
+      console.log(error.message);
+      throw error;
+    }
+    if (currentTag == "") {
+      getNotes(setNotes, setCurrentNote, currentNote, setCurrentTags, userid);
+    } else {
+      getFilterNotes(currentTag, setNotes, setCurrentNote, currentNote, userid);
+    }
   }
 };
 
