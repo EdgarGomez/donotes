@@ -45,12 +45,14 @@ export default function ShareNote({ currentNote }) {
 
   const [shared, setShared] = useState([]);
   const [email, setEmail] = useState("");
-  const [published, setPublished] = useState(currentNote.published || false);
+  const [published, setPublished] = useState(
+    (currentNote && currentNote.published) || false
+  );
 
   useEffect(async () => {
     getShared(currentNote, setShared);
-    setPublished(currentNote.published);
-  }, [currentNote]);
+    setPublished(currentNote && currentNote.published);
+  }, [currentNote && currentNote]);
 
   const handleFormChange = ({ target: { type, name, value } }) => {
     setEmail(value);
