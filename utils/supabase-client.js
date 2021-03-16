@@ -23,6 +23,22 @@ export const getShared = async (currentNote, setShared) => {
   }
 };
 
+export const getPublicNote = async (id, setPublicNote) => {
+  const { data, error } = await supabase
+    .from("notes")
+    .select()
+    .filter("id", "eq", id);
+  if (error) {
+    setPublicNote(false);
+  } else {
+    if (data[0].published) {
+      setPublicNote(data);
+    } else {
+      setPublicNote(false);
+    }
+  }
+};
+
 export const newShared = async (currentNote, setShared, email) => {
   const { data, error } = await supabase.from("shared_notes").insert([
     {

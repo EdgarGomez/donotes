@@ -163,6 +163,11 @@ export default function ShareNote({ currentNote }) {
                     >
                       Publish
                     </Checkbox>
+                    <Input
+                      type="text"
+                      value={`https://donotes.vercel.app/${currentNote.id}`}
+                      hidden={!published}
+                    />
                     <FormHelperText>
                       Anyone with this link can access the note.
                     </FormHelperText>
