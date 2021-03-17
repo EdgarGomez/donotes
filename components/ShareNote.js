@@ -165,7 +165,9 @@ export default function ShareNote({ currentNote }) {
                     </Checkbox>
                     <Input
                       type="text"
-                      value={`https://donotes.vercel.app/${currentNote.id}`}
+                      value={`https://donotes.vercel.app/${
+                        currentNote && currentNote.id
+                      }`}
                       hidden={!published}
                     />
                     <FormHelperText>
